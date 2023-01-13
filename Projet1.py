@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import csv 
 import re 
-
+import os 
 
 
 urlo = "http://books.toscrape.com"
@@ -29,7 +29,7 @@ print(nom_category)
 nb_f = 0
 fichier_csv = "fichier_csv"
 for c in range(len(url_category)):
-    
+    os.makedirs(nom_category[c])
     #-----------------------------------------------------------------------------------------------
     # création du fichier csv 
     en_tete = ["Product_page_url","universal_product_code","title" ,"price_including_tax","price_excluding_tax","number_available","product_description","category","review_rating","image_url" ]
@@ -166,6 +166,24 @@ for c in range(len(url_category)):
 
                 data_all = [url,Tableau['UPC'],Titre,Tableau['Price (incl. tax)'],Tableau['Price (excl. tax)'],Tableau['Availability'],Description,Category,review,URL_image]
 
+                img_data = requests.get(URL_image).content
+
+                Verif_carac_speciaux_slash = Titre.count('/')
+                Verif_carac_speciaux_intero = Titre.count('?')
+
+                if Verif_carac_speciaux_slash > 0:
+                    Titre = Titre.replace('/', '-')
+                else:
+                    pass
+
+                if Verif_carac_speciaux_intero > 0:
+                    Titre = Titre.replace('?', '-')
+                else:
+                    pass
+
+
+                with open(nom_category[c]+"/"+ Titre[:10]+ '.jpg', 'ab' ) as fichier_img:
+                    fichier_img.write(img_data) 
                 with open(nom_category[c] +'.csv', 'a', encoding="utf-8") as fichier_csv:
                     writer = csv.writer(fichier_csv, delimiter=",")
                     writer.writerow(data_all)
@@ -248,13 +266,37 @@ for c in range(len(url_category)):
                 #Récupérer l'URL de l'image
 
                 image = soup.find("img")
-                URL_image= "http://books.toscrape.com/"+ image.get('src')
+                URL_image= "http://books.toscrape.com/"+ image.get('src')[5:]
 
                 
             #ajout des données récupérés à chaque page
 
                 data_all = [url,Tableau['UPC'],Titre,Tableau['Price (incl. tax)'],Tableau['Price (excl. tax)'],Tableau['Availability'],Description,Category,review,URL_image]
+                
 
+                img_data = requests.get(URL_image).content
+                
+                Verif_carac_speciaux_slash = Titre.count('/')
+                Verif_carac_speciaux_intero = Titre.count('?')
+                Verif_carac_speciaux_gui = Titre.count('"')
+
+                if Verif_carac_speciaux_slash > 0:
+                    Titre = Titre.replace('/', '-')
+                else:
+                    pass
+
+                if Verif_carac_speciaux_intero > 0:
+                    Titre = Titre.replace('?', '-')
+                else:
+                    pass
+
+                if Verif_carac_speciaux_gui > 0:
+                    Titre = Titre.replace('"', '-')
+                else:
+                    pass
+
+                with open(nom_category[c]+"/"+Titre[:10]+'.jpg', 'ab' ) as fichier_img:
+                    fichier_img.write(img_data) 
 
                 with open(nom_category[c] +'.csv', 'a', encoding="utf-8") as fichier_csv:
                     writer = csv.writer(fichier_csv, delimiter=",")
