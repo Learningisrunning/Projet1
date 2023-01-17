@@ -9,7 +9,7 @@ urlo = "http://books.toscrape.com"
 pageo = requests.get(urlo)
 soupo = BeautifulSoup(pageo.content, 'html.parser')
 
-#Récupérer l'URL des catégories
+#Récupérer l'URL des catégories et du nom des catégories (E)
 category = soupo.find_all(href=re.compile("category"))
 
 category_nom = soupo.find_all(href=re.compile("category"))
@@ -24,14 +24,14 @@ for nom in category_nom:
 
 url_category.remove("catalogue/category/books_1/index.html")
 nom_category.remove("Books")
-print(nom_category)
+
 
 nb_f = 0
 fichier_csv = "fichier_csv"
 for c in range(len(url_category)):
     os.makedirs(nom_category[c])
     #-----------------------------------------------------------------------------------------------
-    # création du fichier csv 
+    # création du fichier csv (L)
     en_tete = ["Product_page_url","universal_product_code","title" ,"price_including_tax","price_excluding_tax","number_available","product_description","category","review_rating","image_url" ]
     nb_f = nb_f +1
     fichier_csv = str(fichier_csv) + str(nb_f)
@@ -49,14 +49,14 @@ for c in range(len(url_category)):
     pages = requests.get(urls)
     soups = BeautifulSoup(pages.content, 'html.parser')
 
-    #print(urls)
+    
 
-    # récupérer les URLS des nexts si il y en a 
+    # récupérer les URLS des nexts si il y en a (E)
 
     Next_page_urls = []
     Next_page_urls.append(urls)
     Verif_nb_livre = soups.find("form", class_="form-horizontal").strong.string
-    #print(Verif_nb_livre)
+
     nb_p =1
 
     if int(Verif_nb_livre) >20:
@@ -66,7 +66,6 @@ for c in range(len(url_category)):
                 nb_p = nb_p +1
                 fin_url = Next_page
                 urls = "http://books.toscrape.com/" + url_category[c][:-10] + fin_url
-                #print(urls)
                 pages = requests.get(urls)
                 soups = BeautifulSoup(pages.content, 'html.parser')
                 Next_page_urls.append(urls)
@@ -75,11 +74,11 @@ for c in range(len(url_category)):
     else:
         pass
 
-    #print(Next_page_urls)  
+   
 
     t=""
 
-    #Récupérer l'URL de la page/les pages si il y en a plusieurs
+    #Récupérer l'URL de la page/les pages si il y en a plusieurs (E)
 
     if int(Verif_nb_livre) >20:
         for url_next_pages in Next_page_urls:
@@ -103,7 +102,7 @@ for c in range(len(url_category)):
 
                 URL_page.append(soups.find('a', title = alt[i]).get('href'))
         
-            #scraping de toutes les pages de la page sur laquelle on est 
+            #scraping de toutes les pages de la page sur laquelle on est (E/T/L)
 
             for j in range (len(URL_page)):
                 
@@ -117,20 +116,19 @@ for c in range(len(url_category)):
                 soup = BeautifulSoup(page.content, 'html.parser')
 
 
-                #récupération du titre 
+                #récupération du titre (E)
                 Titre = soup.h1.string
                 t = Titre
 
 
-                #récupération de : UPC, Prix avec taxes, Prix sans taxes et nbr dispo
+                #récupération de : UPC, Prix avec taxes, Prix sans taxes et nbr dispo (E)
 
                 Tableau = {}
 
                 infos_th = soup.find_all("th")
                 infos_td = soup.find_all("td")
 
-                #print(infos_th)
-                #print(infos_td)
+                
 
                 for Colonne1, Colonne2 in zip(infos_th, infos_td):
 
@@ -141,30 +139,41 @@ for c in range(len(url_category)):
                 Tableau.pop("Number of reviews")
                 
 
-                #Récupération de la description 
+                #Récupération de la description (E)
                 if soup.find('p', class_="") != None:
                     Description = soup.find('p', class_="").text
                 else : 
                     Description = "pas de description"
             
 
-                #Récupération des notes ( cf : class p avec star-rating + le nombre d'étoiles)
+                #Récupération des notes (E/T)
 
                 get_number_stars = soup.find( "p", class_="star-rating")
                 review = get_number_stars.get('class')[1]
                 
+                if review == "One":
+                    review = review.replace("One", "1")
+                elif review == "Two":
+                    review = review.replace("Two", "2")
+                elif review == "Three":
+                    review = review.replace("Three", "3")
+                elif review == "Four":
+                    review = review.replace("Four", "4")
+                else:
+                    review = review.replace("Five", "5")
 
-                #Récupérer la catégory 
-                Category = soup.find("li", class_="active").previous_sibling.previous_sibling.text
-                #Récupérer l'URL de l'image
+                #Récupérer la catégory (Déjà récupérée avant d'où le commentaire) (E)
+                #Category = soup.find("li", class_="active").previous_sibling.previous_sibling.text
+
+                #Récupérer l'URL de l'image (E)
 
                 image = soup.find("img")
                 URL_image= "http://books.toscrape.com/"+ image.get('src')
 
                 
-            #ajout des données récupérés à chaque page
+            #ajout des données récupérés sur chaque page dans le fichier CSV (T/L)
 
-                data_all = [url,Tableau['UPC'],Titre,Tableau['Price (incl. tax)'],Tableau['Price (excl. tax)'],Tableau['Availability'],Description,Category,review,URL_image]
+                data_all = [url,Tableau['UPC'],Titre,Tableau['Price (incl. tax)'],Tableau['Price (excl. tax)'],Tableau['Availability'][10:12],Description,nom_category[c],review,URL_image]
 
                 img_data = requests.get(URL_image).content
 
@@ -210,7 +219,7 @@ for c in range(len(url_category)):
 
             URL_page.append(soups.find('a', title = alt[i]).get('href'))
         
-            #scraping de toutes les pages de la page sur laquelle on est 
+            #scraping de toutes les pages de la page sur laquelle on est (E/T/L)
 
         for j in range (len(URL_page)):
                 
@@ -224,20 +233,18 @@ for c in range(len(url_category)):
                 soup = BeautifulSoup(page.content, 'html.parser')
 
 
-                #récupération du titre 
+                #récupération du titre (E)
                 Titre = soup.h1.string
             
                 t =  Titre
 
-                #récupération de : UPC, Prix avec taxes, Prix sans taxes et nbr dispo
+                #récupération de : UPC, Prix avec taxes, Prix sans taxes et nbr dispo (E)
 
                 Tableau = {}
 
                 infos_th = soup.find_all("th")
                 infos_td = soup.find_all("td")
 
-                #print(infos_th)
-                #print(infos_td)
 
                 for Colonne1, Colonne2 in zip(infos_th, infos_td):
 
@@ -248,30 +255,42 @@ for c in range(len(url_category)):
                 Tableau.pop("Number of reviews")
                 
 
-                #Récupération de la description 
+                #Récupération de la description  (E)
                 if soup.find('p', class_="") != None:
                     Description = soup.find('p', class_="").text
                 else : 
                     Description = "pas de description"
             
 
-                #Récupération des notes ( cf : class p avec star-rating + le nombre d'étoiles)
+                #Récupération des notes et transformation des valeurs (E/T)
 
                 get_number_stars = soup.find( "p", class_="star-rating")
                 review = get_number_stars.get('class')[1]
                 
+                if review == "One":
+                    review = review.replace("One", "1")
+                elif review == "Two":
+                    review = review.replace("Two", "2")
+                elif review == "Three":
+                    review = review.replace("Three", "3")
+                elif review == "Four":
+                    review = review.replace("Four", "4")
+                else:
+                    review = review.replace("Five", "5")   
+                
 
-                #Récupérer la catégory 
-                Category = soup.find("li", class_="active").previous_sibling.previous_sibling.text
-                #Récupérer l'URL de l'image
+                #Récupérer la catégory (E)
+                #Category = soup.find("li", class_="active").previous_sibling.previous_sibling.text
+
+                #Récupérer l'URL de l'image (E)
 
                 image = soup.find("img")
                 URL_image= "http://books.toscrape.com/"+ image.get('src')[5:]
 
                 
-            #ajout des données récupérés à chaque page
+            #ajout des données récupérés à chaque page (T/L)
 
-                data_all = [url,Tableau['UPC'],Titre,Tableau['Price (incl. tax)'],Tableau['Price (excl. tax)'],Tableau['Availability'],Description,Category,review,URL_image]
+                data_all = [url,Tableau['UPC'],Titre,Tableau['Price (incl. tax)'],Tableau['Price (excl. tax)'],Tableau['Availability'][10:12],Description,nom_category[c],review,URL_image]
                 
 
                 img_data = requests.get(URL_image).content
